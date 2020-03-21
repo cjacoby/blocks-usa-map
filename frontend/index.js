@@ -36,7 +36,10 @@ function USAMapBlock() {
 
     const records = useRecords(stateField ? table : null);
 
-    const mapData = getMapData(records, stateField.name, colorField);
+    let mapData = null;
+    if (stateField !== null && colorField !== null) {
+        mapData = getMapData(records, stateField.name, colorField);
+    }
 
     const mapHandler = (event) => {
         setSelectedState(event.target.dataset.name);
@@ -91,10 +94,11 @@ function USAMapBlock() {
             <Box border="default"
                  backgroundColor="lightGray1"
                  padding={1}>
-                {selectedState
+                {/* TODO Allow selected state to show a column of data. */}
+                {/* {selectedState
                     ? <SelectedState selected={selectedState}/>
                     : <div>Click to select a state</div>
-                }
+                } */}
                 <USAMap title="USA USA USA" width={400} height={300} customize={mapData} onClick={mapHandler}/>
             </Box>
         </div>
@@ -127,7 +131,6 @@ function getMapData(records, stateFieldName, colorField) {
             stateCode = null;
         }
 
-        console.log(`${stateText} ${stateCode} ${stateText in codeStateMap} ${stateText in stateCodeMap}`);
         if (stateCode !== null && colorValue !== null) {
             const color = colorField.type == FieldType.SINGLE_SELECT ? colorUtils.getHexForColor(colorValue.color) : colorValue;
 
