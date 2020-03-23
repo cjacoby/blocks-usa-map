@@ -13,7 +13,7 @@ handle the drawing of the map.
 
 Example:
 
-![Screenshot](mapblock-example.png)
+![Screenshot](/mapblock_example.png)
 
 ## Future TODOs
 - [ ] Show data using mouseovers or mouse clicks
