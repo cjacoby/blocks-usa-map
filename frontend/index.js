@@ -101,10 +101,10 @@ function USAMapBlock() {
     // otherwise draw the map.
     return (
         <div>
-            
             <Box border="default"
                  backgroundColor="lightGray1"
-                 padding={1}>
+                //  padding={}
+                 >
                 {/* TODO Allow selected state to show a column of data. */}
                 {/* {selectedState
                     ? <SelectedState selected={selectedState}/>
@@ -113,7 +113,7 @@ function USAMapBlock() {
                 <USAMap
                     title="USA USA USA"
                     width={viewport.size.width}
-                    height={viewport.size.height}
+                    height={viewport.size.height - 5}
                     customize={mapData}
                     onClick={mapHandler}
                 />
