@@ -4,12 +4,14 @@ import {
     useBase,
     useRecords,
     useGlobalConfig,
+    useSettingsButton,
+    useViewport,
     TablePickerSynced,
     FieldPickerSynced,
     FormField,
     Box,
     Switch,
-    colorUtils
+    colorUtils,
 } from '@airtable/blocks/ui';
 import {FieldType} from '@airtable/blocks/models';
 
@@ -21,8 +23,14 @@ const stateCodeMap = Object.fromEntries(Object.entries(codeStateMap).map(a => a.
 
 
 function USAMapBlock() {
-    const [showFieldPicker, setShowFieldPicker] = useState(true);
+    const [isShowingSettings, setIsShowingSettings] = useState(false);
     const [selectedState, setSelectedState] = useState(null);
+
+    useSettingsButton(function() {
+        setIsShowingSettings(!isShowingSettings);
+    });
+
+    const viewport = useViewport();
 
     const base = useBase();
     const globalConfig = useGlobalConfig();
@@ -33,6 +41,10 @@ function USAMapBlock() {
     const table = base.getTableByIdIfExists(tableId);
     const stateField = table ? table.getFieldByIdIfExists(stateFieldId) : null;
     const colorField = table ? table.getFieldByIdIfExists(colorFieldId) : null;
+
+    // if (table == null || stateField == null || colorField == null) {
+    //     setIsShowingSettings(true);
+    // }
 
     const records = useRecords(stateField ? table : null);
 
@@ -45,16 +57,10 @@ function USAMapBlock() {
         setSelectedState(event.target.dataset.name);
     };
 
-    return (
-        <div>
-            <Switch
-             value={showFieldPicker}
-             onChange={newValue => setShowFieldPicker(newValue)}
-             label={showFieldPicker ? 'Hide Options' : 'Show Options'}
-             width="160px"
-             />
-            {showFieldPicker &&
-            <Box padding={3} borderBottom="thick" display="flex">
+    // If settings is showing, draw settings only
+    if (isShowingSettings) {
+        return (
+            <Box padding={3} display="flex">
                 <FormField
                     label="Table"
                     description="Choose the table you want to your State data to come from."
@@ -90,7 +96,12 @@ function USAMapBlock() {
                     />
                 </FormField>
             </Box>
-            }
+        )
+    }
+    // otherwise draw the map.
+    return (
+        <div>
+            
             <Box border="default"
                  backgroundColor="lightGray1"
                  padding={1}>
@@ -99,7 +110,13 @@ function USAMapBlock() {
                     ? <SelectedState selected={selectedState}/>
                     : <div>Click to select a state</div>
                 } */}
-                <USAMap title="USA USA USA" width={400} height={300} customize={mapData} onClick={mapHandler}/>
+                <USAMap
+                    title="USA USA USA"
+                    width={viewport.size.width}
+                    height={viewport.size.height}
+                    customize={mapData}
+                    onClick={mapHandler}
+                />
             </Box>
         </div>
     )
