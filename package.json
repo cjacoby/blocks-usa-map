@@ -1,6 +1,7 @@
 {
     "dependencies": {
         "@airtable/blocks": "0.0.43",
+        "colormap": "^2.3.1",
         "react": "^16.13.0",
         "react-dom": "^16.13.0",
         "react-usa-map": "^1.4.0"

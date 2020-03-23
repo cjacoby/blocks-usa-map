@@ -16,11 +16,18 @@ import {
 import {FieldType} from '@airtable/blocks/models';
 
 import USAMap from "react-usa-map";
+import colormap from "colormap";
 import SelectedState from "./selectedState";
 
 import codeStateMap from "./stateCodes"
 const stateCodeMap = Object.fromEntries(Object.entries(codeStateMap).map(a => a.reverse()));
 
+let colors = colormap({
+    colormap: 'hot',
+    nshades: 100,
+    format: 'hex',
+    alpha: 1
+})
 
 function USAMapBlock() {
     const [isShowingSettings, setIsShowingSettings] = useState(false);
@@ -92,8 +99,12 @@ function USAMapBlock() {
                         table={table}
                         globalConfigKey="selectedColorFieldId"
                         placeholder="Pick a 'color' field..."
-                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT, FieldType.MULTIPLE_LOOKUP_VALUES]}
+                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT, FieldType.MULTIPLE_LOOKUP_VALUES, FieldType.NUMBER]}
                     />
+
+                {colorField != null && colorField.type === FieldType.NUMBER &&
+                    <text>You have selected a numeric type; state colors will be normalized to the maximum value in your field.</text>
+                }
                 </FormField>
             </Box>
         )
@@ -126,6 +137,19 @@ initializeBlock(() => <USAMapBlock />);
 
 
 function getMapData(records, stateField, colorField) {
+    // If the color is a numeric field, get the maximum value to normalize by.
+    let maxColorValue = null;
+    if (colorField.type === FieldType.NUMBER) {
+        for (const record of records) {
+            let v = record.getCellValue(colorField.name);
+            if (maxColorValue == null) {
+                maxColorValue = v;
+            } else {
+                maxColorValue = Math.max(maxColorValue, v);
+            }
+        }
+    }
+
     const stateColorMap = new Map();
     for (const record of records) {
         // First handle the state
@@ -161,10 +185,21 @@ function getMapData(records, stateField, colorField) {
         }
 
         const colorValue = record.getCellValue(colorField.name);
-        console.log(`State: ${JSON.stringify(stateCell)}, color: ${JSON.stringify(colorValue)}`);
+        // console.log(`State: ${JSON.stringify(stateCell)}, color: ${colorValue}`);
 
         if (stateCode !== null && colorValue !== null) {
-            const color = colorField.type == FieldType.SINGLE_SELECT ? colorUtils.getHexForColor(colorValue.color) : colorValue;
+            let color = null;
+            if (colorField.type == FieldType.SINGLE_SELECT) {
+                color = colorUtils.getHexForColor(colorValue.color);
+            } else if (colorField.type == FieldType.NUMBER && maxColorValue) {
+                // Normalized from 0-1, and then scaled from 0-100 (99 really)
+                let normalizedColorValueIndex = Math.floor((colorValue / maxColorValue) * 100);
+                color = colors[normalizedColorValueIndex];
+                console.log(`color: ${colorValue} | max: ${maxColorValue} | color: ${color} | indez: ${normalizedColorValueIndex}`);
+            }
+            else {
+                color = colorValue;
+            }
 
             if (stateCode !== null && color !== null) {
                 stateColorMap[stateCode] = {fill: color};
