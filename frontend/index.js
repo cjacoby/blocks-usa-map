@@ -50,7 +50,7 @@ function USAMapBlock() {
 
     let mapData = null;
     if (stateField !== null && colorField !== null) {
-        mapData = getMapData(records, stateField.name, colorField);
+        mapData = getMapData(records, stateField, colorField);
     }
 
     const mapHandler = (event) => {
@@ -79,7 +79,7 @@ function USAMapBlock() {
                         table={table}
                         globalConfigKey="selectedStateFieldId"
                         placeholder="Pick a 'state' field..."
-                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT]}
+                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT, FieldType.MULTIPLE_RECORD_LINKS, FieldType.MULTIPLE_LOOKUP_VALUES]}
                     />
                 </FormField>
                 <FormField
@@ -92,7 +92,7 @@ function USAMapBlock() {
                         table={table}
                         globalConfigKey="selectedColorFieldId"
                         placeholder="Pick a 'color' field..."
-                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT]}
+                        allowedTypes={[FieldType.SINGLE_LINE_TEXT, FieldType.SINGLE_SELECT, FieldType.MULTIPLE_LOOKUP_VALUES]}
                     />
                 </FormField>
             </Box>
@@ -125,12 +125,24 @@ function USAMapBlock() {
 initializeBlock(() => <USAMapBlock />);
 
 
-function getMapData(records, stateFieldName, colorField) {
+function getMapData(records, stateField, colorField) {
     const stateColorMap = new Map();
     for (const record of records) {
-        const stateText = record.getCellValue(stateFieldName);
-        const colorValue = record.getCellValue(colorField.name);
-
+        // First handle the state
+        let stateText;
+        const stateCell = record.getCellValue(stateField.name);
+        if (stateField.type == FieldType.SINGLE_LINE_TEXT) {
+            stateText = stateCell;
+        } else if (stateField.type == FieldType.SINGLE_SELECT) {
+            stateText = stateCell.name;
+        } else if (stateField.type == FieldType.MULTIPLE_RECORD_LINKS && stateCell.length > 0 && stateCell[0].name) {
+            stateText = stateCell[0].name;
+        } else if (stateField.type == FieldType.MULTIPLE_LOOKUP_VALUES && stateCell.length > 0) {
+            stateText = stateCell[0];
+        } else {
+            stateText = null;
+        }
+        
         // Validate the state field
         // This uses a map of stateCode:stateName, and an inverse map of stateName:stateCode to allow the user to
         // enter either the code or the name.
@@ -147,6 +159,9 @@ function getMapData(records, stateFieldName, colorField) {
         else {
             stateCode = null;
         }
+
+        const colorValue = record.getCellValue(colorField.name);
+        console.log(`State: ${JSON.stringify(stateCell)}, color: ${JSON.stringify(colorValue)}`);
 
         if (stateCode !== null && colorValue !== null) {
             const color = colorField.type == FieldType.SINGLE_SELECT ? colorUtils.getHexForColor(colorValue.color) : colorValue;
